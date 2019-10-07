@@ -104,10 +104,11 @@ distinct(total)
 #### * 1-2-2 Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with > 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
 
 ```{r Plot_Order}
-total %>% 
+instacart_tidy %>% 
   group_by(aisle_id) %>% 
-  filter(total_items > 10000)  
-  ggplot(a, aes(x = aisle_id, y = total_items, color = aisle_id)) + 
+  mutate(total_items = sum(order_number)) %>% 
+  filter(total_items > 10000) %>% 
+  ggplot(aes(x = aisle_id, y = total_items, color = aisle_id)) + 
     geom_point() + geom_line() +
     scale_x_continuous(
      breaks = c(0, 20, 40, 60, 80, 100, 120, 140), 
@@ -125,8 +126,27 @@ total %>%
 ```
 
 #### * 1-2-3 Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
+```{r popular}
+popular =
+  instacart_tidy %>% 
+  group_by(aisle_id, aisle) %>% 
+  mutate(total_items = sum(order_number)) %>% 
+  filter(aisle == "baking ingredients" | aisle == "dog food care" | 
+         aisle == "packaged vegetables fruits") %>% 
+  ungroup(aisle_id) %>%  
+  filter(min_rank(desc(order_number)) < 4) %>%
+  select(aisle_id, order_number, aisle, product_name)
 
-#### * 1-2-4 Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)
+head(popular, 5)
+```
+
+
+
+
+
+
+
+#### * 1-2-4 Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e.produce a 2 x 7 table)
 
 ### **Problem 2:** This problem uses the BRFSS data.
 
