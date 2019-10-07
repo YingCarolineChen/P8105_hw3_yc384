@@ -88,40 +88,41 @@ We can also see that the variables that we will be using for this problem will b
 ```
 **Answer:** From the above result, we can see that there are 134 aisels. And the ailes that had most items ordered from are listed below:
 
-### Total items sold Not correct. Need to change!!!
 ```{r MaxOrder}
- instacart_tidy %>% 
-  # select aisles with most items ordered
-  filter(order_number == max(order_number)) %>% 
-  select(aisle_id, order_number, product_name) %>% 
-  # print results
-  knitr::kable()
+# sum all items ordered by each aisle
+total =
+  instacart_tidy %>% 
+  group_by(aisle_id) %>% 
+  mutate(total_items = sum(order_number)) %>% 
+  ungroup(aisle_id) %>% 
+  filter(min_rank(desc(total_items)) < 2) %>% 
+  select(aisle_id, total_items)
+
+distinct(total)
 ```
 
 #### * 1-2-2 Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with > 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
 
 ```{r Plot_Order}
- instacart_tidy %>% 
+total %>% 
   group_by(aisle_id) %>% 
-  summarise(
-    total_items = sum(order_number)
-    ) %>% 
-  filter(total_items > 10000) %>% 
-  ggplot(aes(x = aisle_id, y = total_items, color = aisle_id)) + 
+  filter(total_items > 10000)  
+  ggplot(a, aes(x = aisle_id, y = total_items, color = aisle_id)) + 
     geom_point() + geom_line() +
     scale_x_continuous(
      breaks = c(0, 20, 40, 60, 80, 100, 120, 140), 
      labels = c("0", "20", "40","60", "80","100", "120", "140")) +
     scale_y_continuous(
-     breaks = c(0, 100000, 200000, 300000, 400000, 500000, 6000000), 
-     labels = c("0", "100K", "200K", "300K", "400K", "500K", "600K")) 
+     breaks = c(10000, 400000, 800000, 1200000, 1600000, 2000000, 2400000, 2800000), 
+     labels = c("10K", "0.4M", "0.8M", "1.2M", "1.6M", "2MK", "2.4M", "2.8M")) +
+     labs(
+      title = "Total Number of Items Ordered in Each Aisle (> 10K items)",
+      x = "Aisle ID",
+      y = "Total Number of Items Ordered (in millions)",
+      caption = "Data from p8105.datasets"
+      ) 
+  
 ```
-
-
-
-
-
-
 
 #### * 1-2-3 Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
 
