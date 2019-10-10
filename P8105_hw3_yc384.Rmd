@@ -205,7 +205,7 @@ From above summary, we can see that there are many varaibles that have very long
 brfss = 
   janitor::clean_names(brfss_smart2010) %>%   
   # rename long varaibles
-  rename(state = locationabbr, CI_low = confidence_limit_low, CI_upper = confidence_limit_high) %>%
+  rename(state = locationabbr, location = locationdesc, CI_low = confidence_limit_low, CI_upper = confidence_limit_high) %>%
   # focus on the "Overall Health" topic
   filter(topic == "Overall Health") %>% 
   # recode response as a factor varaible
@@ -213,7 +213,7 @@ brfss =
     response = forcats::fct_relevel(response, c("Excellent", "Very good", "Good", "Fair", "Poor"))
   ) %>% 
   # select only needed variables
-  select(year, state, response, data_value) %>% 
+  select(year, location, response, data_value) %>% 
   #organize responses ordered from “Poor” to “Excellent”
   arrange(desc(response))
 
@@ -222,18 +222,63 @@ head(brfss, 3)
 tail(brfss, 3)
 ```  
   
-
 ### 2-2 do or answer the following (commenting on the results of each):
-
 #### 2-2-1 In 2002, which states were observed at 7 or more locations? What about in 2010?
+```{r}
+brfss %>% 
+    separate(location, into = c("state", "county"), sep = "-", extra = "drop") %>%
+    group_by(state, year) %>% 
+    summarize(
+      n_county = n()) %>% 
+    filter(year == "2002", n_county >= 7) %>% 
+    knitr::kable(caption = "States: 7 or more locations in 2002")
+```
+
+**Answer:**From above results, we can see that in 2002, there were 36 states that were observed at 7 or more locations.
+
+```{r}
+brfss %>% 
+    separate(location, into = c("state", "county"), sep = "-", extra = "drop") %>%
+    group_by(state, year) %>% 
+    summarize(
+      n_county = n()) %>% 
+    filter(year == "2010", n_county >= 7) %>% 
+    knitr::kable(caption = "States observed at 7 or more locations in 2002")
+```
+
+**Answer:**From above results, we can see that in 2010, there were 45 states that were observed at 7 or more locations. Much more than year 2002. 
+
+#### 2-2-2 Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. 
+```{r}
+mean =
+  brfss %>% 
+    # remove missing data
+    drop_na() %>% 
+    # separated location into state and city/county
+    separate(location, into = c("state", "county"), sep = "-", extra = "drop") %>%
+    # selected only needed variables
+    select(year, response, state, data_value) %>% 
+    # limited only to Excellent responses
+    filter(response == "Excellent") %>% 
+    # group by state
+    group_by(state, year) %>% 
+    # take the mean of data_value
+    summarize(
+      mean = mean(data_value))
+```
+
+#### 2-2-2Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).
+```{r}
+mean %>% 
+  group_by(state) %>% 
+  ggplot ()+
+  geom_line((aes(x = year, y = mean, group = state, color = state)))+
+  ggtitle("Spaghetti Plot: Mean value of each state across years")
+```
+
+#### 2-3 Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
 
 
-
-
-
-#### 2-2-2 Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data\_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom\_line geometry and group aesthetic will help).
-
-#### 2-2-3 Make a two-panel plot showing, for the years 2006, and 2010, distribution of data\_value for responses (“Poor” to “Excellent”) among locations in NY State.
 
 ### **Problem 3:** This problem uses the accel\_data. In this spreadsheet,
 
