@@ -53,7 +53,7 @@ options(
 )
 
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
-```
+
 options(tibble.print_min = 3)
 ```
 
@@ -100,6 +100,11 @@ From the first 5 lines of data, we can see that aisle one has food from deli dep
 ### 1-2 How many aisles are there, and which aisles are the most items ordered from?
 
 ```{r}
+
+```
+
+
+```{r}
 # number of aisles
 instacart %>% 
   # group by aisles
@@ -112,7 +117,7 @@ instacart %>%
 # most selling aisle
 instacart %>% 
   group_by(aisle_id) %>% 
-  # count number of observations in each aisle
+  #count number of observations in each aisle
   summarize(
       n_order = n()) %>% 
   # sort aisle with highest sell on top
@@ -221,7 +226,7 @@ brfss =
     response = forcats::fct_relevel(response, c("Excellent", "Very good", "Good", "Fair", "Poor"))
   ) %>% 
   # select only needed variables
-  select(year, location, response, data_value) %>% 
+  select(year, state, location, response, data_value) %>% 
   #organize responses ordered from “Poor” to “Excellent”
   arrange(desc(response))
 
@@ -286,6 +291,30 @@ mean %>%
 
 #### 2-3 Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
 
+```{r}
+# made a plot table for year 2006
+ny = 
+   brfss %>% 
+    select(year, response, state, data_value) %>% 
+    # limited NY and year 2006
+    filter(state == "NY") %>% 
+    filter(year == "2006"|year == "2010") %>% 
+    # group by state
+    group_by(state, year) %>% 
+    # order responses from "Poor" to "Excellent"
+    arrange(response)
+
+  ggplot(ny, aes(x = response, y = data_value)) + 
+  geom_violin(aes(fill = year), color = "blue", alpha = .5) + 
+  stat_summary(fun.y = median, geom = "point", color = "blue", size = 4)+
+  facet_grid(. ~ year) +
+  labs(
+    title = "NY Locations Observed in 2006 and 2010",
+      x = "Response",
+      y = "Data_value",
+      caption = "Data from brfss_smart2010"
+  )
+```
 
 
 ### **Problem 3:** This problem uses the accel\_data. In this spreadsheet,
