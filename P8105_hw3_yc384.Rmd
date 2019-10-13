@@ -217,13 +217,13 @@ From above summary, we can see that there are many varaibles that have very long
 ```{r tidy2}
 brfss = 
   janitor::clean_names(brfss_smart2010) %>%   
-  # rename long varaibles
-  rename(state = locationabbr, location = locationdesc, CI_low = confidence_limit_low, CI_upper = confidence_limit_high) %>%
+  # rename varaibles
+  rename(state = locationabbr, location = locationdesc) %>%
   # focus on the "Overall Health" topic
   filter(topic == "Overall Health") %>% 
   # recode response as a factor varaible
   mutate(
-    response = forcats::fct_relevel(response, c("Excellent", "Very good", "Good", "Fair", "Poor"))
+    response = forcats::fct_relevel(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))
   ) %>% 
   # select only needed variables
   select(year, state, location, response, data_value) %>% 
@@ -239,36 +239,46 @@ tail(brfss, 3)
 #### 2-2-1 In 2002, which states were observed at 7 or more locations? What about in 2010?
 ```{r}
 brfss %>% 
-    separate(location, into = c("state", "county"), sep = "-", extra = "drop") %>%
-    group_by(state, year) %>% 
-    summarize(
-      n_county = n()) %>% 
-    filter(year == "2002", n_county >= 7) %>% 
+    # select year 2002
+    filter(year == "2002") %>%  
+    group_by(state) %>% 
+    # remove duplicate locations 
+    distinct(location) %>% 
+    # count of loctions for each state
+    summarize(n_location = n()) %>% 
+    # select states with 7 or more locations in 2002
+    filter(n_location >= 7) %>% 
+    arrange(n_location) %>% 
+    # print table
     knitr::kable(caption = "States: 7 or more locations in 2002")
 ```
 
-**Answer:**From above results, we can see that in 2002, there were 36 states that were observed at 7 or more locations.
+**Answer:** From above results, we can see that in 2002, there were 6 states that were observed at 7 or more locations. PA, NJ and MA are the states had most observed locations. For this question, we had to have duplicates removed because each location had differnt responses and we see multiple rows for each location. 
 
 ```{r}
 brfss %>% 
-    separate(location, into = c("state", "county"), sep = "-", extra = "drop") %>%
-    group_by(state, year) %>% 
-    summarize(
-      n_county = n()) %>% 
-    filter(year == "2010", n_county >= 7) %>% 
-    knitr::kable(caption = "States observed at 7 or more locations in 2002")
+    # select year 2010
+    filter(year == "2010") %>%  
+    group_by(state) %>% 
+    # remove duplicate locations 
+    distinct(location) %>% 
+    # count of loctions for each state
+    summarize(n_location = n()) %>% 
+    # select states with 7 or more locations in 2002
+    filter(n_location >= 7) %>% 
+    arrange(n_location) %>% 
+    # print table
+    knitr::kable(caption = "States: 7 or more locations in 2010")
 ```
 
-**Answer:**From above results, we can see that in 2010, there were 45 states that were observed at 7 or more locations. Much more than year 2002. 
+**Answer:** From above results, we can see that in 2010, there were 14 states that were observed at 7 or more locations. The observed locations significantly has been increased since 2002. FL, NJ and TX	ranked top 3. FL had 41 locations, more than doubled the locations of NJ. Ranking for NJ did not change, but the loctions has increased from 8 to 19. 
 
 #### 2-2-2 Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. 
-```{r}
+```{r mean}
 mean =
   brfss %>% 
     # remove missing data
     drop_na() %>% 
-    # separated location into state and city/county
-    separate(location, into = c("state", "county"), sep = "-", extra = "drop") %>%
     # selected only needed variables
     select(year, response, state, data_value) %>% 
     # limited only to Excellent responses
@@ -277,11 +287,13 @@ mean =
     group_by(state, year) %>% 
     # take the mean of data_value
     summarize(
-      mean = mean(data_value))
+      mean = mean(data_value)
+    )
 ```
 
 #### 2-2-2Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years – the geom_line geometry and group aesthetic will help).
-```{r}
+
+```{r spaghetti}
 mean %>% 
   group_by(state) %>% 
   ggplot ()+
@@ -291,46 +303,119 @@ mean %>%
 
 #### 2-3 Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
 
-```{r}
-# made a plot table for year 2006
+```{r ny}
+# made a plot table for NY and year 2006, 2010
 ny = 
    brfss %>% 
-    select(year, response, state, data_value) %>% 
+    select(year, response, state, location, data_value) %>% 
+    # group by vars
+    group_by(year, state, location) %>% 
     # limited NY and year 2006
-    filter(state == "NY") %>% 
-    filter(year == "2006"|year == "2010") %>% 
-    # group by state
-    group_by(state, year) %>% 
-    # order responses from "Poor" to "Excellent"
-    arrange(response)
+    filter(state =="NY", year %in% c("2006", "2010")) %>% 
+    # reorder responses from "Poor" to "Excellent"
+   mutate(
+    response = reorder(response, c("Poor", "Fair", "Good", "Very good", "Excellent"))
+)
 
-  ggplot(ny, aes(x = response, y = data_value)) + 
-  geom_violin(aes(fill = year), color = "blue", alpha = .5) + 
-  stat_summary(fun.y = median, geom = "point", color = "blue", size = 4)+
-  facet_grid(. ~ year) +
-  labs(
-    title = "NY Locations Observed in 2006 and 2010",
-      x = "Response",
-      y = "Data_value",
+# ggplot
+ggplot(data = ny, aes(x = response, y = data_value, fill = location)) +
+# use data value and plots side by side
+geom_bar(stat = "identity", position = "dodge") +
+# two-panel plot for year 2006 and 2010
+facet_grid(year ~ .)+
+labs(
+    title = "Response Rate for Overall Health Status",
+      subtitle = "Observed Locations in NY State in Year 2006 and 2010)",
+      x = "Overal Health Status (Response)",
+      y = "Data_value((%)",
       caption = "Data from brfss_smart2010"
-  )
+  )+
+theme(text = element_text(size=30))
+```
+**Comments** From the above plots, we can see that in year 2006, only 6 counties were observed and New York County had the highest percentage in the excellent category and Westchester County had the lowest percetage in the poor overal health status category. In year 2010, 3 more locations were observed. Bronx County had the highest percentage in the poor overall health status and Westchester County stay the highest in excellent overall health status.
+
+### **Problem 3:** accel_data used for this problem contains five weeks of accelerometer data collected on a 63 year-old male with BMI 25, who was admitted to the Advanced Cardiac Care Center of Columbia University Medical Center and diagnosed with congestive heart failure (CHF). In this spreadsheet, variables activity are the activity counts for each minute of a 24-hour day starting at midnight.
+
+#### 3-1-1 Load, tidy, and otherwise wrangle the data. Your final dataset should include all originally observed variables and values; have useful variable names; include a weekday vs weekend variable; and encode data with reasonable variable classes. 
+
+```{r}
+# Read in data
+accel_data = 
+  read_csv("./data/accel_data.csv", col_names = TRUE) %>% 
+  janitor::clean_names()
+head(accel_data, 5)
 ```
 
+```{r tidy3}
+# tidy data
+accel = 
+  accel_data %>% 
+    # make a long table
+    pivot_longer(
+     activity_1:activity_1440,
+     names_to = "minute", 
+     names_prefix = "activity_",
+     values_to = "count"
+    ) %>%
+    mutate(
+     # change variable types
+     minute = as.numeric(minute),
+     # create a hour index
+     hour = as.integer(minute / 60),
+     day = factor(day),
+     week = factor(week),
+     #Include a weekday vs weekend variable
+     weekend = case_when(
+           day == "Sunday" | day == "Saturday" ~ "Yes",
+           day != "Sunday" | day != "Saturday" ~ "No"),
+     weekend = factor(weekend) 
+    ) 
 
-### **Problem 3:** This problem uses the accel\_data. In this spreadsheet,
+head(accel, 5)
+```
 
-variables activity.\* are the activity counts for each minute of a
-24-hour day starting at
-midnight.
+#### 3-1-2 Describe the resulting dataset (e.g. what variables exist, how many observations, etc)
+```{r}
+summary(accel)
+```
 
-#### 3-1-1 Load, tidy, and otherwise wrangle the data. Dataset should include all originally observed variables and values; have useful variable names;
-
-#### 3-1-2 Include a weekday vs weekend variable; and encode data with reasonable variable classes.
-
-#### 3-1-3 Describe the resulting dataset (e.g. what variables exist, how many observations, etc).
+AFter tidy the dataset, the clean dataset now contains ` r nrow(accel)` rows and ` r ncol(accel)` varaibles. From the summary, we can see week has value from 1 to 5, which are the weeks that the patient was followed up with. Day_id is the index for the number of days the patient was followed up. Day is the day of the week of each 5 weeks the patient was followed up. The first day the patient started was on a Friday. Minute is the index for the minute that the activity count was made and it is ranging from 1 to 1440. Count is the count for activities. Hour and weekend are the two newly created variables that are index of the hours in a day and if it is on a weekday or on weekend.  
 
 #### 3-2-1 Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+```{r}
+total = 
+  accel %>% 
+    group_by(week, weekend, day) %>% 
+    summarize(total = sum(count)) %>% 
+    arrange(weekend, day) %>% 
+    select(week, weekend, day, total) %>% 
+    pivot_wider(names_from = day,                            
+                values_from = total
+              ) %>%        
+ knitr::kable(caption = "Total activities for each day")
+```
+
+**Answer** From the table above, we can see that the patient's activty level was higher during weekdays than on weekends. Starting from the 4th week, patient's activities dropped significantly on Saturdays, suggesting that only minimus movement was detected. This could be either due to not wearing the tracking devices or patient was hospitalized due to heart failure. 
 
 #### 3-2-2 Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week.
 
+
+
+
 #### 3-2-3 Describe in words any patterns or conclusions you can make based on this graph.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
