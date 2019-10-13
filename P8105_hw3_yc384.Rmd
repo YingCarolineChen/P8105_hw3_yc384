@@ -43,10 +43,14 @@ rm(list = ls())
 knitr::opts_chunk$set(
 	echo = TRUE,
 	warning = FALSE,
-	fig.width = 12, 
-  fig.height = 10,
+	fig.width = 10, 
+  fig.height = 8,
   out.width = "100%"
 )
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
 options(
   ggplot2.continuous.colour = "viridis",
   ggplot2.continuous.fill = "viridis"
@@ -207,7 +211,6 @@ data("brfss_smart2010")
 
 ```{r}
 summary(brfss_smart2010)
-head(brfss_smart2010)
 ```
 
 From above summary, we can see that there are many varaibles that have very long names and names for location difficult to know exact meaning. We will rename some of the varaibles in the code chunck below. 
@@ -298,7 +301,8 @@ mean %>%
   group_by(state) %>% 
   ggplot ()+
   geom_line((aes(x = year, y = mean, group = state, color = state)))+
-  ggtitle("Spaghetti Plot: Mean value of each state across years")
+  ggtitle("Spaghetti Plot: Mean value of each state across years") +
+  theme(text = element_text(size=20))
 ```
 
 #### 2-3 Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
@@ -327,10 +331,10 @@ labs(
     title = "Response Rate for Overall Health Status",
       subtitle = "Observed Locations in NY State in Year 2006 and 2010)",
       x = "Overal Health Status (Response)",
-      y = "Data_value((%)",
+      y = "Data_value(%)",
       caption = "Data from brfss_smart2010"
   )+
-theme(text = element_text(size=30))
+theme(text = element_text(size=12))
 ```
 **Comments** From the above plots, we can see that in year 2006, only 6 counties were observed and New York County had the highest percentage in the excellent category and Westchester County had the lowest percetage in the poor overal health status category. In year 2010, 3 more locations were observed. Bronx County had the highest percentage in the poor overall health status and Westchester County stay the highest in excellent overall health status.
 
@@ -343,7 +347,6 @@ theme(text = element_text(size=30))
 accel_data = 
   read_csv("./data/accel_data.csv", col_names = TRUE) %>% 
   janitor::clean_names()
-head(accel_data, 5)
 ```
 
 ```{r tidy3}
@@ -370,8 +373,6 @@ accel =
            day != "Sunday" | day != "Saturday" ~ "No"),
      weekend = factor(weekend) 
     ) 
-
-head(accel, 5)
 ```
 
 #### 3-1-2 Describe the resulting dataset (e.g. what variables exist, how many observations, etc)
@@ -379,32 +380,58 @@ head(accel, 5)
 summary(accel)
 ```
 
-AFter tidy the dataset, the clean dataset now contains ` r nrow(accel)` rows and ` r ncol(accel)` varaibles. From the summary, we can see week has value from 1 to 5, which are the weeks that the patient was followed up with. Day_id is the index for the number of days the patient was followed up. Day is the day of the week of each 5 weeks the patient was followed up. The first day the patient started was on a Friday. Minute is the index for the minute that the activity count was made and it is ranging from 1 to 1440. Count is the count for activities. Hour and weekend are the two newly created variables that are index of the hours in a day and if it is on a weekday or on weekend.  
+After tidy the dataset, the clean dataset now contains ` r nrow(accel)` rows and ` r ncol(accel)` varaibles. From the summary, we can see week has value from 1 to 5, which are the weeks that the patient was followed up with. Day_id is the index for the number of days the patient was followed up. Day is the day of the week of each 5 weeks the patient was followed up. The first day the patient started was on a Friday. Minute is the index for the minute that the activity count was made and it is ranging from 1 to 1440. Count is the count for activities. Hour and weekend are the two newly created variables that are index of the hours in a day and if it is on a weekday or on weekend.  
 
 #### 3-2-1 Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
 ```{r}
-total = 
   accel %>% 
-    group_by(week, weekend, day) %>% 
+    mutate(
+      day = ordered(day, levels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", 
+                          "Friday", "Saturday")) 
+    )%>% 
+    group_by(week, day) %>% 
     summarize(total = sum(count)) %>% 
-    arrange(weekend, day) %>% 
-    select(week, weekend, day, total) %>% 
+    arrange(day) %>% 
+    select(week, day, total) %>% 
     pivot_wider(names_from = day,                            
                 values_from = total
               ) %>%        
- knitr::kable(caption = "Total activities for each day")
+   knitr::kable(caption = "Total activities for each day", grid = TRUE)
+
 ```
 
 **Answer** From the table above, we can see that the patient's activty level was higher during weekdays than on weekends. Starting from the 4th week, patient's activities dropped significantly on Saturdays, suggesting that only minimus movement was detected. This could be either due to not wearing the tracking devices or patient was hospitalized due to heart failure. 
 
 #### 3-2-2 Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week.
+```{r}
+accel %>% 
+  mutate(
+      day = ordered(day, levels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", 
+                          "Friday", "Saturday")) 
+  )%>% 
+    group_by(week, day, hour, minute) %>% 
+    summarize(total = sum(count)) %>% 
+    arrange(week, day, minute) %>% 
+    select(week, day, minute, hour, total) %>% 
+  ggplot(aes(x = (minute/60), y = total, color = day)) + 
+  geom_point(size = 2, alpha = .6) +
+  scale_x_discrete(limits = 0:24) + 
+  labs(
+    title = "24-hour Activity ScatterPlot",
+      subtitle = "By day of the Week)",
+      x = "Hour in a Day",
+      y = "Activity Count",
+      caption = "Data from accel_data"
+  )+
+theme(text = element_text(size=20))
 
+```
 
 
 
 #### 3-2-3 Describe in words any patterns or conclusions you can make based on this graph.
 
-
+**Answer** Based on the above graph, we can see that the patient's activity starts increasing around 6am in the morning and maintained the same thoughout the day. It increases dramatically from 8pm to 9pm and starts quiet down after 10pm. When looking closer, we can see that every Thursday morning around 7am, patient has hight activity counts than the rest of the week. This patient also has more activities on weekends in the evening time between 7 - 10 pm. Once for a while, patient had higher activity level Saturday afternoon between 4-5pm. We also can see a straight line on the bottom of the graph suggesting no activities at all for Saturdays. Those might be the days that patient forgot to wear his accelerometer. 
 
 
 
