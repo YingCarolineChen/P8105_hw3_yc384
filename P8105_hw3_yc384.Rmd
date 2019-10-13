@@ -104,11 +104,6 @@ From the first 5 lines of data, we can see that aisle one has food from deli dep
 ### 1-2 How many aisles are there, and which aisles are the most items ordered from?
 
 ```{r}
-
-```
-
-
-```{r}
 # number of aisles
 instacart %>% 
   # group by aisles
@@ -144,6 +139,7 @@ From the plots below, we can see that fresh vegetables and fresh fruits are the 
 instacart %>%
  group_by(aisle) %>% 
   summarize(n_order = n()) %>%
+  filter(n_order > 10000) %>% 
   mutate(rank = rank(n_order)) %>% 
   arrange(desc(rank)) %>% 
   # plot scatterplot
@@ -152,10 +148,14 @@ instacart %>%
    geom_bar(stat = "identity", aes(fill = n_order, show.legend = FALSE)) +
     labs(
       title = "Total Number of Items Ordered in Each Aisle (> 10K items)",
-      x = "Aisle ID",
+      x = "Aisle",
       y = "Total Number of Items Ordered",
       caption = "Data from p8105.datasets-instacart"
-      ) 
+      ) +
+theme(legend.position = "none",  
+        axis.text.x = element_text(hjust = 0.8, vjust = 0.5,                  
+                       size = 6, angle = 25
+        ))
 ```
 
 ### 1-4 Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
