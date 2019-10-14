@@ -1,0 +1,5 @@
+"0","mean %>% "
+"0","  group_by(state) %>% "
+"0","  ggplot ()+"
+"0","  geom_line((aes(x = year, y = mean, group = state, color = state)))+"
+"0","  ggtitle(""Spaghetti Plot: Mean value of each state across years"")"

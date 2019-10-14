@@ -1,0 +1,28 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1570285678134.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "7F0B635",
+    "lastKnownWriteTime" : 1570998619,
+    "last_content_update" : 1570998619860,
+    "path" : "~/Documents/Statistics/P8105/HW/P8105_hw3_yc384/P8105_hw3_yc384.Rmd",
+    "project_path" : "P8105_hw3_yc384.Rmd",
+    "properties" : {
+        "cursorPosition" : "436,0",
+        "docOutlineVisible" : "0",
+        "last_setup_crc32" : "F588FDFFf6561c0c",
+        "scrollLine" : "431",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

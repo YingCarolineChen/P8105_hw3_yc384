@@ -1,0 +1,7 @@
+"0","brfss %>% "
+"0","    separate(location, into = c(""state"", ""county""), sep = ""-"", extra = ""drop"") %>%"
+"0","    group_by(state, year) %>% "
+"0","    summarize("
+"0","      n_county = n()) %>% "
+"0","    filter(year == ""2010"", n_county >= 7) %>% "
+"0","    knitr::kable(caption = ""States observed at 7 or more locations in 2002"")"
